@@ -1,0 +1,32 @@
+---
+
+- name: call optional notifier for untracked keys
+  include: 'roles/{{ notifier_role }}/tasks/main.yml'
+  vars:
+    message:
+    attachments:
+    - color: warning
+      mrkdwn_in: ['text']
+      text: >
+        <b>WARNING:</b>
+        key{% if _aws_kms_untracked_keys.__len__() != 1 %}s{% endif %}
+        {% for key in _aws_kms_untracked_keys -%}
+        <b>{{ key }}</b>
+        {%- if not loop.last %}, {% endif -%}
+        {% endfor %}
+        exist{% if _aws_kms_untracked_keys.__len__() == 1 %}s{% endif %}
+        in <a href="{{ _aws_kms_url }}">account {{ aws_profile }}</a>
+        <br/>but
+        {% if _aws_kms_untracked_keys.__len__() == 1 %}is{% else %}are{% endif %}
+        not configured by Ansible
+  when: >
+    notifier_role is defined and
+    _aws_kms_untracked_keys
+
+- name: call optional notifier
+  include: 'roles/{{ notifier_role }}/tasks/main.yml'
+  vars:
+    message: >
+      finished running role <b>aws-kms</b>
+      on <a href="{{ _aws_kms_url }}">account {{ aws_profile }}</a>
+  when: notifier_role is defined

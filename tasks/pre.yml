@@ -1,0 +1,70 @@
+---
+
+- name: set global facts
+  set_fact:
+    _aws_kms_url: >-
+      https://console.aws.amazon.com/iam/home#/encryptionKeys
+
+- name: set target keys fact
+  set_fact:
+    _aws_kms_target_keys: >
+      {{ aws_kms_target_keys.split(",")
+         if aws_kms_target_keys is defined else []
+         | sort }}
+
+- name: call optional notifier
+  include: 'roles/{{ notifier_role }}/tasks/main.yml'
+  vars:
+    message: >
+      started running role <b>aws-kms</b>
+      on <a href="{{ _aws_kms_url }}">account {{ aws_profile }}</a>{%
+      if _aws_kms_target_keys != []
+      -%}, key {% for k in _aws_kms_target_keys -%}<b>{{ k }}</b>{%
+      if not loop.last -%}, {% endif -%}{% endfor -%}{% endif -%}
+  when: notifier_role is defined
+
+- name: set configured keys fact
+  set_fact:
+    _aws_kms_configured_keys: >
+      {{ aws_kms_keys.keys()
+         if aws_kms_keys is defined else []
+         | sort }}
+
+- name: set default target keys fact
+  set_fact:
+    _aws_kms_target_keys: '{{ _aws_kms_configured_keys }}'
+  when: '_aws_kms_target_keys == []'
+
+- name: list existing keys
+  command: >
+    aws kms list-aliases
+            --query 'Aliases[? ! starts_with(AliasName, `alias/aws/`)]
+                     .{alias: AliasName, id: TargetKeyId}'
+            --profile '{{ aws_profile }}'
+  changed_when: False
+  register: _aws_kms_existing_keys_data
+
+- name: set existing keys data fact
+  set_fact:
+    _aws_kms_existing_keys_data: >
+      {{ _aws_kms_existing_keys_data.stdout | from_json | sort }}
+
+- name: reformat existing keys fact into dictionary
+  set_fact:
+    _aws_kms_existing_keys: >
+      {{ _aws_kms_existing_keys
+         | default({})
+         | combine({(key.alias | regex_replace('^alias/', '')): key.id}) }}
+  with_items: '{{ _aws_kms_existing_keys_data }}'
+  loop_control:
+    loop_var: key
+
+- name: set new keys fact
+  set_fact:
+    _aws_kms_new_keys: >
+      {{ _aws_kms_configured_keys | difference(_aws_kms_existing_keys) | sort }}
+
+- name: set untracked keys fact
+  set_fact:
+    _aws_kms_untracked_keys: >
+      {{ _aws_kms_existing_keys | difference(_aws_kms_configured_keys) | sort }}
