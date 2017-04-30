@@ -52,6 +52,12 @@
     _aws_kms_existing_keys_data: >
       {{ _aws_kms_existing_keys_data.stdout | from_json | sort }}
 
+- name: set default existing keys and key policies facts
+  set_fact:
+    _aws_kms_existing_keys: []
+    _aws_kms_existing_key_policies: {}
+  when: _aws_kms_existing_keys_data == []
+
 - name: reformat existing keys fact into dictionary
   set_fact:
     _aws_kms_existing_keys: >
