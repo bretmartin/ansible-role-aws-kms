@@ -23,12 +23,15 @@
       if not loop.last -%}, {% endif -%}{% endfor -%}{% endif -%}
   when: notifier_role is defined
 
-- name: set configured keys fact
+- name: set configured keys and key policies facts
   set_fact:
     _aws_kms_configured_keys: >
       {{ aws_kms_keys.keys()
          if aws_kms_keys is defined else []
          | sort }}
+    _aws_kms_configured_key_policies: >
+      {{ (aws_kms_keys | sort_key_policy)
+         if aws_kms_keys is defined else {} }}
 
 - name: set default target keys fact
   set_fact:
