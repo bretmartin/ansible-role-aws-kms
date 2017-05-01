@@ -3,13 +3,13 @@
 - name: create KMS key {{ _aws_kms_key_alias }}
   command: >
     aws kms create-key
-            --description '{{ _aws_kms_configured_key_policies
+            --description '{{ _aws_kms_configured_key_metadata
                               [_aws_kms_key_alias].description }}'
             --key-usage ENCRYPT_DECRYPT
             --no-bypass-policy-lockout-safety-check
             --origin AWS_KMS
             --output text
-            --policy '{{ _aws_kms_configured_key_policies
+            --policy '{{ _aws_kms_configured_key_metadata
                          [_aws_kms_key_alias].policy
                          | to_json }}'
             --profile {{ aws_profile }}

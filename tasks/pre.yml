@@ -23,13 +23,13 @@
       if not loop.last -%}, {% endif -%}{% endfor -%}{% endif -%}
   when: notifier_role is defined
 
-- name: set configured key aliases and key policies facts
+- name: set configured key aliases and key metadata facts
   set_fact:
     _aws_kms_configured_key_aliases: >
       {{ aws_kms_keys.keys()
          if aws_kms_keys is defined else []
          | sort }}
-    _aws_kms_configured_key_policies: >
+    _aws_kms_configured_key_metadata: >
       {{ (aws_kms_keys | sort_key_policy)
          if aws_kms_keys is defined else {} }}
 
@@ -52,10 +52,10 @@
     _aws_kms_existing_key_aliases_data: >
       {{ _aws_kms_existing_key_aliases_data.stdout | from_json | sort }}
 
-- name: set default existing key aliases and key policies facts
+- name: set default existing key aliases and key metadata facts
   set_fact:
     _aws_kms_existing_key_aliases: []
-    _aws_kms_existing_key_policies: {}
+    _aws_kms_existing_key_metadata: {}
   when: _aws_kms_existing_key_aliases_data == []
 
 - name: reformat existing key aliases fact into dictionary
@@ -74,25 +74,25 @@
             --policy-name default
             --profile {{ aws_profile }}
   with_items: '{{ _aws_kms_existing_key_aliases }}'
-  register: _aws_kms_existing_key_policies_data
+  register: _aws_kms_existing_key_policies
   changed_when: False
 
-- name: reformat existing key policies fact into dictionary
+- name: set existing key metadata fact
   set_fact:
-    _aws_kms_existing_key_policies: >
-      {{ _aws_kms_existing_key_policies
+    _aws_kms_existing_key_metadata: >
+      {{ _aws_kms_existing_key_metadata
          | default({})
-         | combine({item.item: (item.stdout | from_json)}) }}
-  with_items: '{{ _aws_kms_existing_key_policies_data.results }}'
+         | combine({item.item: {"policy": (item.stdout | from_json)}}) }}
+  with_items: '{{ _aws_kms_existing_key_policies.results }}'
 
 - name: write host variables file if one doesn't already exist and keys do exist
   copy:
     content: "---\n\n
-      {{ {'aws_kms_keys': _aws_kms_existing_key_policies}
+      {{ {'aws_kms_keys': _aws_kms_existing_key_metadata}
          | to_nice_yaml(indent=2) }}"
     dest: '{{ playbook_dir }}/host_vars/{{ inventory_hostname }}/kms.yml'
     force: false
-  when: _aws_kms_existing_key_policies != {}
+  when: _aws_kms_existing_key_metadata != {}
 
 - name: set new key aliases fact
   set_fact:
