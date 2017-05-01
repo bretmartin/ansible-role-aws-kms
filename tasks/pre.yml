@@ -30,7 +30,7 @@
          if aws_kms_keys is defined else []
          | sort }}
     _aws_kms_configured_key_metadata: >
-      {{ (aws_kms_keys | sort_key_policy)
+      {{ aws_kms_keys
          if aws_kms_keys is defined else {} }}
 
 - name: set default target key aliases fact
