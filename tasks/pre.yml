@@ -87,9 +87,8 @@
 
 - name: write host variables file if one doesn't already exist and keys do exist
   copy:
-    content: "---\n\n
-      {{ {'aws_kms_keys': _aws_kms_existing_key_metadata}
-         | to_nice_yaml(indent=2) }}"
+    content: "---\n\n{{ {'aws_kms_keys': _aws_kms_existing_key_metadata}
+                        | to_nice_yaml(indent=2) }}"
     dest: '{{ playbook_dir }}/host_vars/{{ inventory_hostname }}/kms.yml'
     force: false
   when: _aws_kms_existing_key_metadata != {}
