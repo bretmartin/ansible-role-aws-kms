@@ -1,10 +1,5 @@
 ---
 
-- name: set global facts
-  set_fact:
-    _aws_kms_url: >-
-      https://console.aws.amazon.com/iam/home#/encryptionKeys
-
 - name: set target key aliases fact
   set_fact:
     _aws_kms_target_key_aliases: >
@@ -25,13 +20,9 @@
 
 - name: set configured key aliases and key metadata facts
   set_fact:
-    _aws_kms_configured_key_aliases: >
-      {{ aws_kms_keys.keys()
-         if aws_kms_keys is defined else []
-         | sort }}
-    _aws_kms_configured_key_metadata: >
-      {{ aws_kms_keys
-         if aws_kms_keys is defined else {} }}
+    _aws_kms_configured_key_aliases:  '{{ aws_kms_keys.keys() | sort }}'
+    _aws_kms_configured_key_metadata: '{{ aws_kms_keys }}'
+  when: aws_kms_keys is defined
 
 - name: set default target key aliases fact
   set_fact:
@@ -51,12 +42,6 @@
   set_fact:
     _aws_kms_existing_key_aliases_data: >
       {{ _aws_kms_existing_key_aliases_data.stdout | from_json | sort }}
-
-- name: set default existing key aliases and key metadata facts
-  set_fact:
-    _aws_kms_existing_key_aliases: {}
-    _aws_kms_existing_key_metadata: {}
-  when: _aws_kms_existing_key_aliases_data == []
 
 - name: reformat existing key aliases fact into dictionary
   set_fact:

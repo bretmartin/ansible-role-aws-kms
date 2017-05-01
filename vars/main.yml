@@ -1,0 +1,9 @@
+---
+
+_aws_kms_url: https://console.aws.amazon.com/iam/home#/encryptionKeys
+
+_aws_kms_configured_key_aliases:  []
+_aws_kms_configured_key_metadata: {}
+
+_aws_kms_existing_key_aliases:    {}
+_aws_kms_existing_key_metadata:   {}
