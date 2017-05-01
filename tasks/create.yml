@@ -4,7 +4,8 @@
   command: >
     aws kms create-key
             --description '{{ _aws_kms_configured_key_metadata
-                              [_aws_kms_key_alias].description }}'
+                              [_aws_kms_key_alias].description
+                              | default("") }}'
             --key-usage ENCRYPT_DECRYPT
             --no-bypass-policy-lockout-safety-check
             --origin AWS_KMS
