@@ -54,7 +54,7 @@
 
 - name: set default existing key aliases and key metadata facts
   set_fact:
-    _aws_kms_existing_key_aliases: []
+    _aws_kms_existing_key_aliases: {}
     _aws_kms_existing_key_metadata: {}
   when: _aws_kms_existing_key_aliases_data == []
 
