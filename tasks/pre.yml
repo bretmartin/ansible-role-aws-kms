@@ -68,6 +68,27 @@
   loop_control:
     loop_var: key
 
+- name: get existing key policies
+  command: >
+    aws kms get-key-policy
+            --key-id {{ _aws_kms_existing_keys[key] }}
+            --output text
+            --policy-name default
+            --profile {{ aws_profile }}
+  with_items: '{{ _aws_kms_existing_keys }}'
+  loop_control:
+    loop_var: key
+  register: _aws_kms_existing_key_policies_data
+  changed_when: False
+
+- name: reformat existing key policies fact into dictionary
+  set_fact:
+    _aws_kms_existing_key_policies: >
+      {{ _aws_kms_existing_key_policies
+         | default({})
+         | combine({item.key: (item.stdout | from_json)}) }}
+  with_items: '{{ _aws_kms_existing_key_policies_data.results }}'
+
 - name: set new keys fact
   set_fact:
     _aws_kms_new_keys: >
