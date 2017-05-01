@@ -8,4 +8,12 @@
   loop_control:
     loop_var: _aws_kms_key_alias
 
+- include: sync_policy.yml
+  with_items: '{{ _aws_kms_configured_key_aliases }}'
+  when: >
+    _aws_kms_key_alias in _aws_kms_configured_key_aliases and
+    _aws_kms_key_alias in _aws_kms_existing_key_aliases
+  loop_control:
+    loop_var: _aws_kms_key_alias
+
 - include: post.yml

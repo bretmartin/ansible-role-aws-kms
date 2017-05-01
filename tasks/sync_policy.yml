@@ -1,0 +1,41 @@
+---
+
+- name: set policy synced fact
+  set_fact:
+    _aws_kms_key_policy_synced: >-
+      {{
+        (_aws_kms_configured_key_metadata[_aws_kms_key_alias].policy
+         | sort_key_policy)
+        ==
+        (_aws_kms_existing_key_metadata[_aws_kms_key_alias].policy
+         | sort_key_policy)
+      }}
+
+- name: update policy for KMS key {{ _aws_kms_key_alias }}
+  command: >
+    aws kms put-key-policy
+            --key-id {{ _aws_kms_existing_key_aliases[_aws_kms_key_alias] }}
+            --no-bypass-policy-lockout-safety-check
+            --policy '{{ _aws_kms_configured_key_metadata
+                         [_aws_kms_key_alias].policy
+                         | to_json }}'
+            --policy-name default
+            --profile {{ aws_profile }}
+  when: not _aws_kms_key_policy_synced
+
+- name: call optional notifier
+  include: 'roles/{{ notifier_role }}/tasks/main.yml'
+  vars:
+    message: >
+      updated polcy for <a href="{{
+        _aws_kms_url
+      }}/{{
+        aws_region
+      }}/{{
+        _aws_kms_existing_key_aliases[_aws_kms_key_alias]
+      }}">KMS key {{
+        _aws_kms_key_alias
+      }}</a> in <a href="{{ _aws_kms_url }}">account {{ aws_profile }}</a>
+  when: >
+    notifier_role is defined and
+    not _aws_kms_key_policy_synced
