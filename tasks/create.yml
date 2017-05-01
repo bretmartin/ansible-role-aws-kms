@@ -1,16 +1,16 @@
 ---
 
-- name: create KMS key {{ _aws_kms_key }}
+- name: create KMS key {{ _aws_kms_key_alias }}
   command: >
     aws kms create-key
             --description '{{ _aws_kms_configured_key_policies
-                              [_aws_kms_key].description }}'
+                              [_aws_kms_key_alias].description }}'
             --key-usage ENCRYPT_DECRYPT
             --no-bypass-policy-lockout-safety-check
             --origin AWS_KMS
             --output text
             --policy '{{ _aws_kms_configured_key_policies
-                         [_aws_kms_key].policy
+                         [_aws_kms_key_alias].policy
                          | to_json }}'
             --profile {{ aws_profile }}
             --query 'KeyMetadata.KeyId'
@@ -20,10 +20,10 @@
   set_fact:
     _aws_kms_created_key_id: '{{ _aws_kms_create_key.stdout }}'
 
-- name: create KMS key alias {{ _aws_kms_key }}
+- name: create KMS key alias {{ _aws_kms_key_alias }}
   command: >
     aws kms create-alias
-            --alias-name 'alias/{{ _aws_kms_key }}'
+            --alias-name 'alias/{{ _aws_kms_key_alias }}'
             --profile {{ aws_profile }}
             --target-key-id {{ _aws_kms_created_key_id }}
   register: _aws_kms_create_alias
@@ -39,7 +39,7 @@
       }}/{{
         _aws_kms_created_key_id
       }}">KMS key {{
-        _aws_kms_key
+        _aws_kms_key_alias
       }}</a> in <a href="{{ _aws_kms_url }}">account {{ aws_profile }}</a>
   when: >
     notifier_role is defined and

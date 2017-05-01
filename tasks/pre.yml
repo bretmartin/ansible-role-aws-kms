@@ -5,9 +5,9 @@
     _aws_kms_url: >-
       https://console.aws.amazon.com/iam/home#/encryptionKeys
 
-- name: set target keys fact
+- name: set target key aliases fact
   set_fact:
-    _aws_kms_target_keys: >
+    _aws_kms_target_key_aliases: >
       {{ aws_kms_target_keys.split(",")
          if aws_kms_target_keys is defined else []
          | sort }}
@@ -18,14 +18,14 @@
     message: >
       started running role <b>aws-kms</b>
       on <a href="{{ _aws_kms_url }}">account {{ aws_profile }}</a>{%
-      if _aws_kms_target_keys != []
-      -%}, key {% for k in _aws_kms_target_keys -%}<b>{{ k }}</b>{%
+      if _aws_kms_target_key_aliases != []
+      -%}, key {% for k in _aws_kms_target_key_aliases -%}<b>{{ k }}</b>{%
       if not loop.last -%}, {% endif -%}{% endfor -%}{% endif -%}
   when: notifier_role is defined
 
-- name: set configured keys and key policies facts
+- name: set configured key aliases and key policies facts
   set_fact:
-    _aws_kms_configured_keys: >
+    _aws_kms_configured_key_aliases: >
       {{ aws_kms_keys.keys()
          if aws_kms_keys is defined else []
          | sort }}
@@ -33,51 +33,47 @@
       {{ (aws_kms_keys | sort_key_policy)
          if aws_kms_keys is defined else {} }}
 
-- name: set default target keys fact
+- name: set default target key aliases fact
   set_fact:
-    _aws_kms_target_keys: '{{ _aws_kms_configured_keys }}'
-  when: '_aws_kms_target_keys == []'
+    _aws_kms_target_key_aliases: '{{ _aws_kms_configured_key_aliases }}'
+  when: '_aws_kms_target_key_aliases == []'
 
-- name: list existing keys
+- name: list existing key aliases
   command: >
     aws kms list-aliases
             --query 'Aliases[? ! starts_with(AliasName, `alias/aws/`)]
                      .{alias: AliasName, id: TargetKeyId}'
             --profile '{{ aws_profile }}'
   changed_when: False
-  register: _aws_kms_existing_keys_data
+  register: _aws_kms_existing_key_aliases_data
 
-- name: set existing keys data fact
+- name: set existing key aliases data fact
   set_fact:
-    _aws_kms_existing_keys_data: >
-      {{ _aws_kms_existing_keys_data.stdout | from_json | sort }}
+    _aws_kms_existing_key_aliases_data: >
+      {{ _aws_kms_existing_key_aliases_data.stdout | from_json | sort }}
 
-- name: set default existing keys and key policies facts
+- name: set default existing key aliases and key policies facts
   set_fact:
-    _aws_kms_existing_keys: []
+    _aws_kms_existing_key_aliases: []
     _aws_kms_existing_key_policies: {}
-  when: _aws_kms_existing_keys_data == []
+  when: _aws_kms_existing_key_aliases_data == []
 
-- name: reformat existing keys fact into dictionary
+- name: reformat existing key aliases fact into dictionary
   set_fact:
-    _aws_kms_existing_keys: >
-      {{ _aws_kms_existing_keys
+    _aws_kms_existing_key_aliases: >
+      {{ _aws_kms_existing_key_aliases
          | default({})
-         | combine({(key.alias | regex_replace('^alias/', '')): key.id}) }}
-  with_items: '{{ _aws_kms_existing_keys_data }}'
-  loop_control:
-    loop_var: key
+         | combine({(item.alias | regex_replace('^alias/', '')): item.id}) }}
+  with_items: '{{ _aws_kms_existing_key_aliases_data }}'
 
 - name: get existing key policies
   command: >
     aws kms get-key-policy
-            --key-id {{ _aws_kms_existing_keys[key] }}
+            --key-id {{ _aws_kms_existing_key_aliases[item] }}
             --output text
             --policy-name default
             --profile {{ aws_profile }}
-  with_items: '{{ _aws_kms_existing_keys }}'
-  loop_control:
-    loop_var: key
+  with_items: '{{ _aws_kms_existing_key_aliases }}'
   register: _aws_kms_existing_key_policies_data
   changed_when: False
 
@@ -86,7 +82,7 @@
     _aws_kms_existing_key_policies: >
       {{ _aws_kms_existing_key_policies
          | default({})
-         | combine({item.key: (item.stdout | from_json)}) }}
+         | combine({item.item: (item.stdout | from_json)}) }}
   with_items: '{{ _aws_kms_existing_key_policies_data.results }}'
 
 - name: write host variables file if one doesn't already exist and keys do exist
@@ -98,12 +94,16 @@
     force: false
   when: _aws_kms_existing_key_policies != {}
 
-- name: set new keys fact
+- name: set new key aliases fact
   set_fact:
-    _aws_kms_new_keys: >
-      {{ _aws_kms_configured_keys | difference(_aws_kms_existing_keys) | sort }}
+    _aws_kms_new_key_aliases: >
+      {{ _aws_kms_configured_key_aliases
+         | difference(_aws_kms_existing_key_aliases)
+         | sort }}
 
-- name: set untracked keys fact
+- name: set untracked key aliases fact
   set_fact:
-    _aws_kms_untracked_keys: >
-      {{ _aws_kms_existing_keys | difference(_aws_kms_configured_keys) | sort }}
+    _aws_kms_untracked_key_aliases: >
+      {{ _aws_kms_existing_key_aliases
+         | difference(_aws_kms_configured_key_aliases)
+         | sort }}

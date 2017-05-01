@@ -3,9 +3,9 @@
 - include: pre.yml
 
 - include: create.yml
-  with_items: '{{ _aws_kms_configured_keys }}'
-  when: _aws_kms_key not in _aws_kms_existing_keys
+  with_items: '{{ _aws_kms_configured_key_aliases }}'
+  when: _aws_kms_key_alias not in _aws_kms_existing_key_aliases
   loop_control:
-    loop_var: _aws_kms_key
+    loop_var: _aws_kms_key_alias
 
 - include: post.yml

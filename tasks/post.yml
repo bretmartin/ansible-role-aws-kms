@@ -9,19 +9,19 @@
       mrkdwn_in: ['text']
       text: >
         <b>WARNING:</b>
-        key{% if _aws_kms_untracked_keys.__len__() != 1 %}s{% endif %}
-        {% for key in _aws_kms_untracked_keys -%}
+        key{% if _aws_kms_untracked_key_aliases.__len__() != 1 %}s{% endif %}
+        {% for key in _aws_kms_untracked_key_aliases -%}
         <b>{{ key }}</b>
         {%- if not loop.last %}, {% endif -%}
         {% endfor %}
-        exist{% if _aws_kms_untracked_keys.__len__() == 1 %}s{% endif %}
+        exist{% if _aws_kms_untracked_key_aliases.__len__() == 1 %}s{% endif %}
         in <a href="{{ _aws_kms_url }}">account {{ aws_profile }}</a>
         <br/>but
-        {% if _aws_kms_untracked_keys.__len__() == 1 %}is{% else %}are{% endif %}
-        not configured by Ansible
+        {% if _aws_kms_untracked_key_aliases.__len__() == 1
+          %}is{% else %}are{% endif %} not configured by Ansible
   when: >
     notifier_role is defined and
-    _aws_kms_untracked_keys
+    _aws_kms_untracked_key_aliases
 
 - name: call optional notifier
   include: 'roles/{{ notifier_role }}/tasks/main.yml'
