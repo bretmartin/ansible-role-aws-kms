@@ -1,0 +1,47 @@
+---
+
+- name: create KMS key {{ _aws_kms_key }}
+  command: >
+    aws kms create-key
+            --description '{{ _aws_kms_configured_key_policies
+                              [_aws_kms_key].description }}'
+            --key-usage ENCRYPT_DECRYPT
+            --no-bypass-policy-lockout-safety-check
+            --origin AWS_KMS
+            --output text
+            --policy '{{ _aws_kms_configured_key_policies
+                         [_aws_kms_key].policy
+                         | to_json }}'
+            --profile {{ aws_profile }}
+            --query 'KeyMetadata.KeyId'
+  register: _aws_kms_create_key
+
+- name: set created KMS key ID fact
+  set_fact:
+    _aws_kms_created_key_id: '{{ _aws_kms_create_key.stdout }}'
+
+- name: create KMS key alias {{ _aws_kms_key }}
+  command: >
+    aws kms create-alias
+            --alias-name 'alias/{{ _aws_kms_key }}'
+            --profile {{ aws_profile }}
+            --target-key-id {{ _aws_kms_created_key_id }}
+  register: _aws_kms_create_alias
+
+- name: call optional notifier
+  include: 'roles/{{ notifier_role }}/tasks/main.yml'
+  vars:
+    message: >
+      created <a href="{{
+        _aws_kms_url
+      }}/{{
+        aws_region
+      }}/{{
+        _aws_kms_created_key_id
+      }}">KMS key {{
+        _aws_kms_key
+      }}</a> in <a href="{{ _aws_kms_url }}">account {{ aws_profile }}</a>
+  when: >
+    notifier_role is defined and
+    _aws_kms_create_key.changed and
+    _aws_kms_create_alias.changed
