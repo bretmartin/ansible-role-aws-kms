@@ -1,14 +1,14 @@
 ---
 
-- include: pre.yml
+- include_tasks: pre.yml
 
-- include: create.yml
+- include_tasks: create.yml
   with_items: '{{ _aws_kms_configured_key_aliases }}'
   when: _aws_kms_key_alias not in _aws_kms_existing_key_aliases
   loop_control:
     loop_var: _aws_kms_key_alias
 
-- include: sync_policy.yml
+- include_tasks: sync_policy.yml
   with_items: '{{ _aws_kms_configured_key_aliases }}'
   when: >
     _aws_kms_key_alias in _aws_kms_configured_key_aliases and
@@ -16,4 +16,4 @@
   loop_control:
     loop_var: _aws_kms_key_alias
 
-- include: post.yml
+- include_tasks: post.yml

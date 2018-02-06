@@ -8,7 +8,7 @@
          | sort }}
 
 - name: call optional notifier
-  include: 'roles/{{ notifier_role }}/tasks/main.yml'
+  include_tasks: 'roles/{{ notifier_role }}/tasks/main.yml'
   vars:
     message: >
       started running role <b>aws-kms</b>

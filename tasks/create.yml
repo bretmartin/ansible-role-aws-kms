@@ -30,7 +30,7 @@
   register: _aws_kms_create_alias
 
 - name: call optional notifier
-  include: 'roles/{{ notifier_role }}/tasks/main.yml'
+  include_tasks: 'roles/{{ notifier_role }}/tasks/main.yml'
   vars:
     message: >
       created <a href="{{

@@ -24,7 +24,7 @@
   when: not _aws_kms_key_policy_synced
 
 - name: call optional notifier
-  include: 'roles/{{ notifier_role }}/tasks/main.yml'
+  include_tasks: 'roles/{{ notifier_role }}/tasks/main.yml'
   vars:
     message: >
       updated polcy for <a href="{{

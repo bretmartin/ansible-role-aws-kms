@@ -1,7 +1,7 @@
 ---
 
 - name: call optional notifier for untracked keys
-  include: 'roles/{{ notifier_role }}/tasks/main.yml'
+  include_tasks: 'roles/{{ notifier_role }}/tasks/main.yml'
   vars:
     message:
     attachments:
@@ -24,7 +24,7 @@
     _aws_kms_untracked_key_aliases
 
 - name: call optional notifier
-  include: 'roles/{{ notifier_role }}/tasks/main.yml'
+  include_tasks: 'roles/{{ notifier_role }}/tasks/main.yml'
   vars:
     message: >
       finished running role <b>aws-kms</b>
