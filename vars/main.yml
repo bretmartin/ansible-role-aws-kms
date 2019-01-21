@@ -1,5 +1,8 @@
 ---
 
+arn_prefix: 'arn:aws:iam::'
+arn_prefix_this_account: '{{ arn_prefix }}{{ (aws_account|string) }}:'
+
 _aws_kms_url: https://console.aws.amazon.com/iam/home#/encryptionKeys
 
 _aws_kms_configured_key_aliases:  []
@@ -7,3 +10,66 @@ _aws_kms_configured_key_metadata: {}
 
 _aws_kms_existing_key_aliases:    {}
 _aws_kms_existing_key_metadata:   {}
+
+aws_kms_canned_statements:
+
+  delegate_to_iam:
+    Action: kms:*
+    Effect: Allow
+    Principal:
+      AWS: arn:aws:iam::889684531543:root
+    Resource: '*'
+    Sid: Enable IAM User Permissions
+
+  key_administrators: &aws_kms_canned_statements_key_administrators
+    Action:
+      - kms:Create*
+      - kms:Describe*
+      - kms:Enable*
+      - kms:List*
+      - kms:Put*
+      - kms:Update*
+      - kms:Revoke*
+      - kms:Disable*
+      - kms:Get*
+      - kms:Delete*
+      - kms:ScheduleKeyDeletion
+      - kms:CancelKeyDeletion
+    Effect: Allow
+    Principal:
+      AWS:
+        # - arn:aws:iam::889684531543:user/hbi16058
+        # - arn:aws:iam::889684531543:role/admin
+    Resource: '*'
+    Sid: Allow access for Key Administrators
+
+  key_users:
+    Action:
+      - kms:Encrypt
+      - kms:Decrypt
+      - kms:ReEncrypt*
+      - kms:GenerateDataKey*
+      - kms:DescribeKey
+    Effect: Allow
+    Principal:
+      AWS:
+        - arn:aws:iam::889684531543:user/hbi16058
+        - arn:aws:iam::889684531543:role/admin
+    Resource: '*'
+    Sid: Allow use of the key
+
+  persistent_resources:
+    Action:
+      - kms:CreateGrant
+      - kms:ListGrants
+      - kms:RevokeGrant
+    Condition:
+      Bool:
+        kms:GrantIsForAWSResource: 'true'
+    Effect: Allow
+    Principal:
+      AWS:
+        - arn:aws:iam::889684531543:user/hbi16058
+        - arn:aws:iam::889684531543:role/admin
+    Resource: '*'
+    Sid: Allow attachment of persistent resources

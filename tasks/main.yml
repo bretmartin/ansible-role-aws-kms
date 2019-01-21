@@ -1,6 +1,11 @@
 ---
 
+- debug: var=aws_kms_keys
+#- command: /usr/bin/false
+
 - include_tasks: pre.yml
+
+- command: /usr/bin/false
 
 - include_tasks: create.yml
   with_items: '{{ _aws_kms_configured_key_aliases }}'
